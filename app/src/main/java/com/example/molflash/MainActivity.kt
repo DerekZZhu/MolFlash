@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
         flashButton.setOnClickListener {
             if(!isActivated) {
-//                message("Flash Activated", this)
+                message("Pulse Activated", this)
                 actText.text = "Activated"
                 isActivated = !isActivated
                 pulse(
@@ -56,9 +56,7 @@ class MainActivity : AppCompatActivity() {
                     cycles = (if (cycle.text == null) 5 else cycle.text.toString().toInt())
                 )
             } else {
-//                message("Flash Deactivated", this)
-                actText.text = "Not Activated"
-                isActivated = !isActivated
+                message("Pulse Still Running!", this)
             }
         }
     }
