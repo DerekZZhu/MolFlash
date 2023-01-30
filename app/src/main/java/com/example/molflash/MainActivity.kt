@@ -51,9 +51,9 @@ class MainActivity : AppCompatActivity() {
                 actText.text = "Activated"
                 isActivated = !isActivated
                 pulse(
-                    period = (if (period.text == null) 2000 else period.text.toString().toLong()),
-                    timeOn = (if (timeon.text == null) 0 else timeon.text.toString().toLong()),
-                    cycles = (if (cycle.text == null) 5 else cycle.text.toString().toInt())
+                    period = (if (period.text == null || period.text.toString() == "") 2000 else period.text.toString().toLong()),
+                    timeOn = (if (timeon.text == null || timeon.text.toString() == "") 0 else timeon.text.toString().toLong()),
+                    cycles = (if (cycle.text == null || cycle.text.toString() == "") 5 else cycle.text.toString().toInt())
                 )
             } else {
                 message("Pulse Still Running!", this)
