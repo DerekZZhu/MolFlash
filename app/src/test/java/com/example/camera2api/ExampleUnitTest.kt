@@ -1,4 +1,4 @@
-package com.example.molflash
+package com.example.camera2api
 
 import org.junit.Test
 
