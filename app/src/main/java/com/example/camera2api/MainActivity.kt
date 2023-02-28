@@ -5,17 +5,29 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.view.Surface
 import android.view.TextureView
+import android.widget.Button
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import java.util.*
+import java.util.Timer.*
+import kotlin.concurrent.schedule
+import kotlin.concurrent.scheduleAtFixedRate
 
 class MainActivity : AppCompatActivity() {
+    val cameraM by lazy { getSystemService(Context.CAMERA_SERVICE) as CameraManager }
+    var camIdWithFlash: String = "0"
 
     lateinit var capReq: CaptureRequest.Builder
 
@@ -28,11 +40,26 @@ class MainActivity : AppCompatActivity() {
     lateinit var cameraDevice: CameraDevice
     lateinit var captureRequest: CaptureRequest
 
+    lateinit var flashButton : Button
+    var isActivated = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         get_permissions()
+        Log.d("MainActivity", "This is a debug message");
+
+        val camList = cameraM.cameraIdList
+        camList.forEach {
+            val characteristics = cameraM.getCameraCharacteristics(it)
+            val hasFlash: Boolean? = characteristics.get(FLASH_INFO_AVAILABLE)
+            if (camIdWithFlash == "0" && hasFlash == true) {
+                camIdWithFlash = it
+            }
+        }
+
+        flashButton = findViewById(R.id.capture)
 
         textureView = findViewById(R.id.textureView)
         cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -64,7 +91,11 @@ class MainActivity : AppCompatActivity() {
             override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
 
             }
+        }
 
+        flashButton.setOnClickListener {
+            Log.d("Flash", "Flash Button Fired");
+            pulse()
         }
     }
 
@@ -129,5 +160,31 @@ class MainActivity : AppCompatActivity() {
                 get_permissions()
             }
         }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun pulse(period: Long = 2000, timeOn: Long = 0, cycles: Int = 5) {
+        val timer = Timer()
+        var count = 1
+
+        timer.scheduleAtFixedRate(0, period) {
+            if (count == cycles) {
+                isActivated = false
+                timer.cancel();
+            }
+            if (timer != null) {
+                cameraM.setTorchMode(camIdWithFlash, true)
+                Timer().schedule(timeOn) {
+                    cameraM.setTorchMode(camIdWithFlash, false)
+                }
+                count++
+                Log.d("Flashing", "000133505 Flashing");
+            }
+        }
+    }
+
+    fun message(s: String, c: Context) {
+        Toast.makeText(c, s, Toast.LENGTH_SHORT).show()
     }
 }
