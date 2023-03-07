@@ -3,6 +3,7 @@ package com.example.camera2api
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Camera
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE
@@ -25,8 +26,9 @@ import java.util.Timer.*
 import kotlin.concurrent.schedule
 import kotlin.concurrent.scheduleAtFixedRate
 
+
 class MainActivity : AppCompatActivity() {
-    val cameraM by lazy { getSystemService(Context.CAMERA_SERVICE) as CameraManager }
+//    val cameraM by lazy { getSystemService(Context.CAMERA_SERVICE) as CameraManager }
     var camIdWithFlash: String = "0"
 
     lateinit var capReq: CaptureRequest.Builder
@@ -50,15 +52,6 @@ class MainActivity : AppCompatActivity() {
         get_permissions()
         Log.d("MainActivity", "This is a debug message");
 
-        val camList = cameraM.cameraIdList
-        camList.forEach {
-            val characteristics = cameraM.getCameraCharacteristics(it)
-            val hasFlash: Boolean? = characteristics.get(FLASH_INFO_AVAILABLE)
-            if (camIdWithFlash == "0" && hasFlash == true) {
-                camIdWithFlash = it
-            }
-        }
-
         flashButton = findViewById(R.id.capture)
 
         textureView = findViewById(R.id.textureView)
@@ -67,6 +60,21 @@ class MainActivity : AppCompatActivity() {
         handlerThread.start()
         handler = Handler((handlerThread).looper)
 
+        val camList = cameraManager.cameraIdList
+        camList.forEach {
+            val characteristics = cameraManager.getCameraCharacteristics(it)
+            val hasFlash: Boolean? = characteristics.get(FLASH_INFO_AVAILABLE)
+            if (camIdWithFlash == "0" && hasFlash == true) {
+                camIdWithFlash = it
+            }
+        }
+
+
+        cameraManager.setTorchMode(camIdWithFlash, true)
+        message("Exist", this)
+
+
+
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(
                 surface: SurfaceTexture,
@@ -74,6 +82,7 @@ class MainActivity : AppCompatActivity() {
                 height: Int
             ) {
                 open_camera()
+//                cameraDevice.
             }
 
             override fun onSurfaceTextureSizeChanged(
@@ -95,7 +104,9 @@ class MainActivity : AppCompatActivity() {
 
         flashButton.setOnClickListener {
             Log.d("Flash", "Flash Button Fired");
-            pulse()
+            message("FIRE", this)
+//            cameraManager.setTorchMode(camIdWithFlash, true)
+//            pulse()
         }
     }
 
@@ -109,11 +120,16 @@ class MainActivity : AppCompatActivity() {
                 var surface = Surface(textureView.surfaceTexture)
                 capReq.addTarget(surface)
 
+//                captureRequest = capReq.build()
+
 
                 cameraDevice.createCaptureSession(listOf(surface), object:
                     CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSession = session
+                        // Setting up capture request modifications
+                        capReq.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.FLASH_MODE_OFF)
+
                         cameraCaptureSession.setRepeatingRequest(capReq.build(), null, null)
                     }
 
@@ -174,9 +190,9 @@ class MainActivity : AppCompatActivity() {
                 timer.cancel();
             }
             if (timer != null) {
-                cameraM.setTorchMode(camIdWithFlash, true)
+                cameraManager.setTorchMode(camIdWithFlash, true)
                 Timer().schedule(timeOn) {
-                    cameraM.setTorchMode(camIdWithFlash, false)
+                    cameraManager.setTorchMode(camIdWithFlash, false)
                 }
                 count++
                 Log.d("Flashing", "000133505 Flashing");
